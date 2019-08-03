@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify
 from flask_restful import Resource, Api
 from flask_jwt_extended import JWTManager
@@ -8,12 +10,16 @@ from resources.user import UserRegister, User, UserLogin, TokenRefresh
 from resources.crib import Crib, Cribs
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PROPOGATE_EXCEPTIONS'] = True
 CORS(app)
 app.secret_key = 'darthvader21'
 api = Api(app)
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
 jwt = JWTManager(app)
 

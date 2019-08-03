@@ -5,3 +5,5 @@ Flask-SQLAlchemy
 requests
 bs4
 uwsgi
+Flask-CORS
+psycopg2
