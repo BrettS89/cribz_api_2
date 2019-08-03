@@ -56,5 +56,5 @@ def home():
 if __name__ == '__main__':
     from db import db
     db.init_app(app)
-    port = int(os.environ.get('PORT', 5000))
+    port = os.environ.get('PORT', 5000)
     app.run(port=port, host='0.0.0.0')
