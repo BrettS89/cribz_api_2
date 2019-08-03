@@ -57,7 +57,8 @@ api.add_resource(TokenRefresh, '/refresh')
 def home():
     return 'Baller Cribz'
 
-if __name__ == '__main__':
-    from db import db
+from db import db
     db.init_app(app)
+
+if __name__ == '__main__':
     app.run(port=5000)
