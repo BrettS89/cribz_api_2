@@ -1,9 +1,21 @@
-import sqlite3
 from services.crib import scrape
 import time
+from db import db
 
 
-class CribModel:
+class CribModel(db.Model):
+    __tablename__ = 'cribs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String)
+    name = db.Column(db.String)
+    price = db.Column(db.Float(precision=2))
+    pictures = db.Column(db.String)
+    created_date = db.Column(db.Float)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship('UserModel')
+
+
     def __init__(self, _id, url, name, price, pictures, user, created_date):
         crib_details = CribModel.get_details(url)
         self.id = _id
@@ -11,7 +23,7 @@ class CribModel:
         self.name = crib_details['name']
         self.price = crib_details['price']
         self.pictures = crib_details['pictures']
-        self.user = user
+        self.user_id = user
         self.created_date = created_date
 
     @classmethod
@@ -25,18 +37,8 @@ class CribModel:
         return scrape(url)
 
     @classmethod
-    def get_by_id(self, _id):
-        connection = sqlite3.connect('data.db')
-        cursor = connection.cursor()
-
-        query = 'SELECT * FROM cribs WHERE id=?'
-        results = cursor.execute(query, (_id,))
-        row = results.fetchone()
-        connection.close()
-
-        return CribModel(
-            row[0], row[1], row[2], row[3], row[4], row[5], row[6]
-            )
+    def get_by_id(cls, _id):
+        return cls.query.filter_by(id=_id).first()
 
     def json(self):
         return {
@@ -45,50 +47,18 @@ class CribModel:
             'name': self.name,
             'price': self.price,
             'pictures': self.pictures.split('|'),
-            'user': self.user,
+            'user_id': self.user.id,
             'created_date': self.created_date
         }
 
     def save_to_db(self):
-        connection = sqlite3.connect('data.db')
-        cursor = connection.cursor()
-        query = 'INSERT INTO cribs VALUES (NULL, ?, ?, ?, ?, ?, ?)'
-        cursor.execute(
-            query,
-            (self.url,
-             self.name,
-             self.price,
-             self.pictures,
-             self.user,
-             self.created_date))
+        db.session.add(self)
+        db.session.commit()
 
-        connection.commit()
-        connection.close()
-        self.get_by_url(self.url)
-
-    def get_by_url(self, url):
-        connection = sqlite3.connect('data.db')
-        cursor = connection.cursor()
-
-        query = 'SELECT * FROM cribs WHERE url=?'
-        results = cursor.execute(query, (url,))
-        row = results.fetchone()
-
-        self.id = row[0]
-        self.url = row[1]
-        self.name = row[2]
-        self.price = row[3]
-        self.pictures = row[4]
-        self.user = row[5]
-        self.created_date = row[6]
-
-        connection.close()
+    @classmethod
+    def get_by_url(cls, url):
+        return cls.query.filter_by(url=url).first()
 
     def delete_from_db(self):
-        connection = sqlite3.connect('data.db')
-        cursor = connection.cursor()
-
-        query = 'DELETE FROM cribs WHERE id=?'
-        cursor.execute(query, (self.id,))
-        connection.commit()
-        connection.close()
+        db.session.delete(self)
+        db.session.commit()

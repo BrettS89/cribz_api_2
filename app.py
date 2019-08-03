@@ -8,6 +8,8 @@ from resources.user import UserRegister, User, UserLogin, TokenRefresh
 from resources.crib import Crib, Cribs
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PROPOGATE_EXCEPTIONS'] = True
 CORS(app)
 app.secret_key = 'darthvader21'
@@ -49,5 +51,7 @@ api.add_resource(TokenRefresh, '/refresh')
 def home():
     return 'Baller Cribz'
 
-
-app.run(port=5000)
+if __name__ == '__main__':
+    from db import db
+    db.init_app(app)
+    app.run(port=5000)

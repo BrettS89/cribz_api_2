@@ -43,7 +43,11 @@ class User(Resource):
 
     @classmethod
     def delete(cls, user_id):
-        UserModel.delete_from_db(user_id)
+        user = UserModel.find_by_id(user_id)
+        if not user:
+            return { 'message': 'could not find user' }, 404
+        
+        user.delete_from_db()
 
 
 class UserLogin(Resource):
@@ -62,20 +66,23 @@ class UserLogin(Resource):
 
     @classmethod
     def post(cls):
-        data = cls.parser.parse_args()
-        user = UserModel(None, None)
-        user.find_by_email(data['email'])
-        # user = UserModel.find_by_email(email=data['email'])
+        try:
+            data = cls.parser.parse_args()
+            user = UserModel.find_by_email(data['email'])
 
-        if user and data['password'] == user.password:
-            access_token = create_access_token(identity=user.id, fresh=True)
-            refresh_token = create_refresh_token(user.id)
-            return {
-                'access_token': access_token,
-                'refresh_token': refresh_token
-            }, 200
+            if user and data['password'] == user.password:
+                access_token = create_access_token(identity=user.id, fresh=True)
+                refresh_token = create_refresh_token(user.id)
+                return {
+                    'access_token': access_token,
+                    'refresh_token': refresh_token
+                }, 200
 
-        return { 'message': 'invalid credentials' }, 401
+            return { 'message': 'invalid credentials' }, 401
+            
+        except Exception as err:
+            print(err)
+            return { 'message': 'an error occured' }, 500
 
 
 class TokenRefresh(Resource):

@@ -10,28 +10,9 @@ class Cribs(Resource):
     @jwt_optional
     def get(self):
         user_id = get_jwt_identity()
-        connection = sqlite3.connect('data.db')
-        cursor = connection.cursor()
-
-        query = 'SELECT * FROM cribs WHERE user=? ORDER BY created_date DESC'
-        results = cursor.execute(query, (user_id,))
-        crib_list = list(results)
-        formatted_cribs = []
-
-        for c in crib_list:
-            formatted_crib = {
-                'id': c[0],
-                'url': c[1],
-                'name': c[2],
-                'price': c[3],
-                'pictures': c[4].split('|'),
-                'user': c[5],
-                'created_date': c[6]
-            }
-            formatted_cribs.append(formatted_crib)
-
-        return {'cribs': formatted_cribs}, 200
-
+        return {
+            'cribs': [crib.json() for crib in CribModel.query.filter_by(user_id=user_id)]
+        }, 200
 
 class Crib(Resource):
     parser = reqparse.RequestParser()
@@ -52,6 +33,7 @@ class Crib(Resource):
         try:
             crib = CribModel.from_url(data['url'], user_id)
             crib.save_to_db()
+            print(crib.json())
             return {'crib': crib.json()}, 201
         except Exception as err:
             print(err)
@@ -65,7 +47,7 @@ class Crib(Resource):
             user_id = get_jwt_identity()
             crib = CribModel.get_by_id(data['_id'])
             
-            if crib.user != user_id:
+            if crib.user.id != user_id:
                 return {
                     'message': 'you do not have authorization to delete this crib'
                 }, 401
