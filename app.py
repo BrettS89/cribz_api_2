@@ -7,7 +7,7 @@ from flask_cors import CORS
 
 from security import authenticate, identity
 from resources.user import UserRegister, User, UserLogin, TokenRefresh
-from resources.crib import Crib, Cribs
+from resources.crib import Crib, Cribs, FindCribs
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
@@ -18,6 +18,10 @@ app.secret_key = 'darthvader21'
 api = Api(app)
 
 jwt = JWTManager(app)
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
 @jwt.user_claims_loader
 def add_claims_to_jwt(identity):
@@ -47,6 +51,7 @@ api.add_resource(Cribs, '/cribs')
 api.add_resource(User, '/user/<int:user_id>')
 api.add_resource(UserLogin, '/auth')
 api.add_resource(TokenRefresh, '/refresh')
+api.add_resource(FindCribs, '/findcribs')
 
 
 @app.route('/')

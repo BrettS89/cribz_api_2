@@ -10,8 +10,36 @@ class Cribs(Resource):
     def get(self):
         user_id = get_jwt_identity()
         return {
-            'cribs': [crib.json() for crib in CribModel.query.filter_by(user_id=user_id)]
+            'cribs': [crib.json() for crib in CribModel.query.filter_by(user_id=user_id).limit(20)]
         }, 200
+
+
+class FindCribs(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument('date',
+                        type=int,
+                        )
+
+    # @jwt_optional
+    # @jwt_required
+    def get(self):
+        data = Crib.parser.parse_args()
+
+        cribs = []
+
+        try:
+            if data.get('date'):
+                cribs = CribModel.query.filter_by(CribModel.created_date < data['date']).order_by(CribModel.created_date.desc()).limit(20)
+            else:
+                cribs = CribModel.query.order_by(CribModel.created_date.desc()).limit(20)
+            
+            return {
+                'cribs': [crib.json() for crib in cribs]
+            }, 200
+        except Exception as err:
+            print(err)
+            return { 'message': 'an error occured' }, 500
+    
 
 class Crib(Resource):
     parser = reqparse.RequestParser()
